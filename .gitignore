@@ -1,0 +1,14 @@
+# Generado por OpenTofu
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+
+# Inventario de Ansible generado por OpenTofu
+ansible/hosts
+
+# Imágenes de disco y ficheros grandes
+*.qcow2
+*.img
+*.iso
+*.retry
