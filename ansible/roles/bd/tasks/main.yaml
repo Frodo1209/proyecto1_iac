@@ -1,0 +1,55 @@
+- name: Instalar MariaDB
+  ansible.builtin.apt:
+    name: "{{ paquetes_bd }}"
+    state: present
+
+- name: Escuchar solo en la red de datos
+  ansible.builtin.template:
+    src: 60-guestbook.cnf.j2
+    dest: /etc/mysql/mariadb.conf.d/60-guestbook.cnf
+    mode: "0644"
+  notify: Reiniciar MariaDB
+
+- name: Asegurar que MariaDB está arrancado
+  ansible.builtin.service:
+    name: mariadb
+    state: started
+    enabled: true
+
+- name: Crear la base de datos
+  community.mysql.mysql_db:
+    name: "{{ bd_nombre }}"
+    state: present
+    login_unix_socket: "{{ bd_socket }}"
+
+- name: Crear el usuario, que solo se conecta desde el servidor web
+  community.mysql.mysql_user:
+    name: "{{ bd_usuario }}"
+    host: "{{ ip_web }}"
+    password: "{{ bd_password }}"
+    priv: "{{ bd_nombre }}.*:SELECT,INSERT,UPDATE,DELETE"
+    state: present
+    login_unix_socket: "{{ bd_socket }}"
+
+- name: Descargar schema.sql de la aplicación
+  ansible.builtin.get_url:
+    url: "{{ app_repo_raw }}/{{ app_version }}/schema.sql"
+    dest: /root/guestbook-schema.sql
+    mode: "0644"
+
+# Idempotencia: solo se importa el esquema si la tabla aún no existe
+- name: Comprobar si existen las tablas
+  community.mysql.mysql_query:
+    login_db: "{{ bd_nombre }}"
+    query: "SHOW TABLES LIKE 'messages'"
+    login_unix_socket: "{{ bd_socket }}"
+  register: tablas
+  changed_when: false
+
+- name: Crear las tablas
+  community.mysql.mysql_db:
+    name: "{{ bd_nombre }}"
+    state: import
+    target: /root/guestbook-schema.sql
+    login_unix_socket: "{{ bd_socket }}"
+  when: tablas.rowcount[0] == 0

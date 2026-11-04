@@ -1,0 +1,4 @@
+# {{ ansible_managed }}
+# Se carga después de 50-server.cnf, así que sustituye su bind-address
+[mysqld]
+bind-address = {{ ip_bd }}
