@@ -1,0 +1,14 @@
+network:
+  version: 2
+  ethernets:
+    nat:
+      match:
+        macaddress: "${mac_nat}"
+      set-name: eth0
+      dhcp4: true
+    datos:
+      match:
+        macaddress: "${mac_datos}"
+      set-name: eth1
+      dhcp4: false
+      addresses: ["${ip_datos}"]

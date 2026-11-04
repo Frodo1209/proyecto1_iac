@@ -1,0 +1,11 @@
+#cloud-config
+hostname: ${hostname}
+timezone: Europe/Madrid
+
+users:
+  - name: ${usuario}
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    lock_passwd: true
+    ssh_authorized_keys:
+      - ${clave_ssh}
