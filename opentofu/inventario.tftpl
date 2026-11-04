@@ -1,0 +1,6 @@
+# Fichero generado por OpenTofu (opentofu/inventario.tf): no lo edites a mano
+[servidores_web]
+web ansible_host=${maquinas.web.ip_nat} ansible_user=${maquinas.web.usuario} ip_datos=${maquinas.web.ip_datos}
+
+[servidores_bd]
+bd ansible_host=${maquinas.bd.ip_nat} ansible_user=${maquinas.bd.usuario} ip_datos=${maquinas.bd.ip_datos}
