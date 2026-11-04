@@ -1,0 +1,5 @@
+paquetes_comunes:
+  - vim
+  - curl
+  - ca-certificates
+  - mariadb-client

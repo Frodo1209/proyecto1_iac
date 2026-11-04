@@ -1,0 +1,15 @@
+# Virtual host de la aplicación
+servername: www.fran.org
+documentroot: /var/www/guestbook
+
+# Ficheros de la aplicación que se descargan (config.php se genera con plantilla)
+app_ficheros:
+  - index.php
+  - style.css
+  - .htaccess
+
+paquetes_web:
+  - apache2
+  - libapache2-mod-php
+  - php-mysql
+  - php-mbstring

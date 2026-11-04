@@ -1,0 +1,6 @@
+paquetes_bd:
+  - mariadb-server
+  - python3-pymysql   # lo necesitan los módulos community.mysql
+
+# Socket de MariaDB: Ansible se conecta como root por él, sin contraseña
+bd_socket: /run/mysqld/mysqld.sock

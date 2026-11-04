@@ -1,0 +1,30 @@
+- name: Configuración común
+  hosts: all
+  become: true
+  gather_facts: false
+  pre_tasks:
+    # Tras "tofu apply" las máquinas pueden estar aún arrancando
+    - name: Esperar a que las máquinas acepten SSH
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+
+    - name: Esperar a que termine cloud-init
+      ansible.builtin.command: cloud-init status --wait
+      changed_when: false
+
+    - name: Recoger información de las máquinas
+      ansible.builtin.setup:
+  roles:
+    - commons
+
+- name: Servidor de base de datos
+  hosts: servidores_bd
+  become: true
+  roles:
+    - bd
+
+- name: Servidor web
+  hosts: servidores_web
+  become: true
+  roles:
+    - web

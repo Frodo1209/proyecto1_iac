@@ -1,0 +1,13 @@
+# IP de cada máquina en la red de datos. Salen del inventario que genera
+# OpenTofu (variable ip_datos de cada host), así no se repiten aquí a mano
+ip_web: "{{ hostvars[groups['servidores_web'][0]]['ip_datos'] }}"
+ip_bd: "{{ hostvars[groups['servidores_bd'][0]]['ip_datos'] }}"
+
+# Base de datos de la aplicación
+bd_nombre: guestbook
+bd_usuario: guestbook
+bd_password: Gu3stb00k-2026
+
+# Aplicación: repositorio y versión (commit) que se despliega
+app_repo_raw: https://raw.githubusercontent.com/josedom24/guestbook_php
+app_version: a5b6c516e2aab8449e1e838284b2eff97813251d
