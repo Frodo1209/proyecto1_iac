@@ -1,0 +1,46 @@
+- name: Instalar Apache con PHP
+  ansible.builtin.apt:
+    name: "{{ paquetes_web }}"
+    state: present
+
+- name: Activar el módulo rewrite
+  community.general.apache2_module:
+    name: rewrite
+    state: present
+  notify: Reiniciar Apache
+
+- name: Crear el DocumentRoot
+  ansible.builtin.file:
+    path: "{{ documentroot }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Descargar la aplicación
+  ansible.builtin.get_url:
+    url: "{{ app_repo_raw }}/{{ app_version }}/{{ item }}"
+    dest: "{{ documentroot }}/{{ item }}"
+    mode: "0644"
+  loop: "{{ app_ficheros }}"
+
+- name: Generar config.php con los datos de conexión
+  ansible.builtin.template:
+    src: config.php.j2
+    dest: "{{ documentroot }}/config.php"
+    owner: root
+    group: www-data
+    mode: "0640"
+
+- name: Crear el virtual host
+  ansible.builtin.template:
+    src: guestbook.conf.j2
+    dest: /etc/apache2/sites-available/guestbook.conf
+    mode: "0644"
+  notify: Recargar Apache
+
+- name: Activar el virtual host
+  ansible.builtin.command: a2ensite guestbook
+  args:
+    creates: /etc/apache2/sites-enabled/guestbook.conf
+  notify: Recargar Apache

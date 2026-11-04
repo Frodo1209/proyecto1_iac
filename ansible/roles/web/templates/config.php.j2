@@ -1,0 +1,13 @@
+<?php
+// {{ ansible_managed }}
+// Configuración de conexión a MariaDB
+
+return [
+    'db' => [
+        'host' => '{{ ip_bd }}',
+        'name' => '{{ bd_nombre }}',
+        'user' => '{{ bd_usuario }}',
+        'pass' => '{{ bd_password }}',
+        'charset' => 'utf8mb4',
+    ],
+];
