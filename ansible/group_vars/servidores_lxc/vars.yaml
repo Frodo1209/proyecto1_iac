@@ -41,7 +41,7 @@ lxc_exec: >-
 postgres_version: 17
 app_bd_nombre: notas
 app_bd_usuario: notas
-app_bd_password: N0tas-Lxc-2026
+app_bd_password: "{{ vault_app_bd_password }}"   # cifrada en ../all/vault.yaml
 
 # Aplicación (contenedor caddy)
 app_documentroot: /var/www/notas
