@@ -1,0 +1,12 @@
+<?php
+// {{ ansible_managed }}
+// Conexión a PostgreSQL (contenedor postgres). Está fuera del DocumentRoot.
+
+return [
+    'db' => [
+        'host' => '{{ contenedores.postgres.ip }}',
+        'name' => '{{ app_bd_nombre }}',
+        'user' => '{{ app_bd_usuario }}',
+        'pass' => '{{ app_bd_password }}',
+    ],
+];
