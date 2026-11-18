@@ -1,0 +1,13 @@
+#!/usr/sbin/nft -f
+# {{ ansible_managed }}
+# Redirige los puertos web de la máquina al contenedor caddy.
+# Tabla propia: no toca las reglas que crea lxc-net
+table ip lxc_dnat
+delete table ip lxc_dnat
+
+table ip lxc_dnat {
+    chain prerouting {
+        type nat hook prerouting priority dstnat; policy accept;
+        iifname "eth0" tcp dport { {{ puertos_caddy | join(', ') }} } dnat to {{ contenedores.caddy.ip }}
+    }
+}
