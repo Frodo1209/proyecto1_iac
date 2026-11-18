@@ -2,6 +2,14 @@ locals {
   # Datos de cada máquina. Las MAC son fijas para que cloud-init identifique
   # cada interfaz igual en Debian y en Ubuntu (los nombres ens3/enp1s0 cambian)
   maquinas = {
+    # Bastión: único punto de entrada por SSH al resto de máquinas
+    bastion = {
+      imagen    = var.imagen_debian
+      memoria   = var.memoria_bastion
+      usuario   = "debian"
+      mac_nat   = "52:54:00:14:00:05"
+      mac_datos = "52:54:00:50:00:05"
+    }
     web = {
       imagen    = var.imagen_debian
       memoria   = var.memoria_web

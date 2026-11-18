@@ -1,9 +1,26 @@
 # Fichero generado por OpenTofu (opentofu/inventario.tf): no lo edites a mano
+#
+# Solo el bastión es accesible por SSH desde el anfitrión (por su IP NAT).
+# Al resto se entra a través de él, por su IP de la red de datos.
+
+[bastion]
+bastion ansible_host=${maquinas.bastion.ip_nat} ansible_user=${maquinas.bastion.usuario} ip_datos=${maquinas.bastion.ip_datos}
+
 [servidores_web]
-web ansible_host=${maquinas.web.ip_nat} ansible_user=${maquinas.web.usuario} ip_datos=${maquinas.web.ip_datos}
+web ansible_host=${maquinas.web.ip_datos} ansible_user=${maquinas.web.usuario} ip_datos=${maquinas.web.ip_datos}
 
 [servidores_bd]
-bd ansible_host=${maquinas.bd.ip_nat} ansible_user=${maquinas.bd.usuario} ip_datos=${maquinas.bd.ip_datos}
+bd ansible_host=${maquinas.bd.ip_datos} ansible_user=${maquinas.bd.usuario} ip_datos=${maquinas.bd.ip_datos}
 
 [servidores_lxc]
-lxc ansible_host=${maquinas.lxc.ip_nat} ansible_user=${maquinas.lxc.usuario} ip_datos=${maquinas.lxc.ip_datos}
+lxc ansible_host=${maquinas.lxc.ip_datos} ansible_user=${maquinas.lxc.usuario} ip_datos=${maquinas.lxc.ip_datos}
+
+[internas:children]
+servidores_web
+servidores_bd
+servidores_lxc
+
+# Salto por el bastión (ProxyCommand en vez de ProxyJump para que la conexión
+# al bastión tampoco pregunte por la huella de la clave)
+[internas:vars]
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand="ssh -W %h:%p -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${maquinas.bastion.usuario}@${maquinas.bastion.ip_nat}"'
