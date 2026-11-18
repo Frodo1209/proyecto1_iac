@@ -4,3 +4,6 @@ web ansible_host=${maquinas.web.ip_nat} ansible_user=${maquinas.web.usuario} ip_
 
 [servidores_bd]
 bd ansible_host=${maquinas.bd.ip_nat} ansible_user=${maquinas.bd.usuario} ip_datos=${maquinas.bd.ip_datos}
+
+[servidores_lxc]
+lxc ansible_host=${maquinas.lxc.ip_nat} ansible_user=${maquinas.lxc.usuario} ip_datos=${maquinas.lxc.ip_datos}

@@ -1,0 +1,7 @@
+- name: Recargar Caddy
+  ansible.builtin.command: "{{ lxc_exec }} caddy -- systemctl reload caddy"
+  changed_when: true
+
+- name: Reiniciar Caddy
+  ansible.builtin.command: "{{ lxc_exec }} caddy -- systemctl restart caddy"
+  changed_when: true

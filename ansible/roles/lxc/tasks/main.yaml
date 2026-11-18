@@ -1,0 +1,125 @@
+- name: Instalar LXC
+  ansible.builtin.apt:
+    name: "{{ paquetes_lxc }}"
+    state: present
+
+# --- Red de los contenedores ---------------------------------------------
+
+- name: Configurar el puente de lxc-net
+  ansible.builtin.template:
+    src: lxc-net.j2
+    dest: /etc/default/lxc-net
+    mode: "0644"
+  notify: Reiniciar lxc-net
+
+- name: IP fija de cada contenedor en el DHCP
+  ansible.builtin.template:
+    src: dnsmasq.conf.j2
+    dest: /etc/lxc/dnsmasq.conf
+    mode: "0644"
+  notify: Reiniciar lxc-net
+
+- name: Configuración por defecto de los contenedores
+  ansible.builtin.template:
+    src: default.conf.j2
+    dest: /etc/lxc/default.conf
+    mode: "0644"
+
+- name: Asegurar que lxc-net está arrancado
+  ansible.builtin.service:
+    name: lxc-net
+    state: started
+    enabled: true
+
+# La red tiene que estar lista antes de crear y arrancar los contenedores
+- name: Aplicar los cambios de red pendientes
+  ansible.builtin.meta: flush_handlers
+
+# --- Contenedores ----------------------------------------------------------
+
+- name: Crear los contenedores
+  ansible.builtin.command: >-
+    lxc-create -n {{ item.key }} -t download -- {{ lxc_imagen }}
+  args:
+    creates: /var/lib/lxc/{{ item.key }}/rootfs
+  loop: "{{ contenedores | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+
+- name: MAC fija de cada contenedor
+  ansible.builtin.lineinfile:
+    path: /var/lib/lxc/{{ item.key }}/config
+    regexp: '^lxc\.net\.0\.hwaddr'
+    line: "lxc.net.0.hwaddr = {{ item.value.mac }}"
+  loop: "{{ contenedores | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  register: mac
+
+- name: Arrancar los contenedores con la máquina
+  ansible.builtin.lineinfile:
+    path: /var/lib/lxc/{{ item.key }}/config
+    regexp: '^lxc\.start\.auto'
+    line: "lxc.start.auto = 1"
+  loop: "{{ contenedores | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+
+# Si un contenedor ya estaba en marcha y le ha cambiado la MAC, se reinicia
+- name: Arrancar los contenedores
+  ansible.builtin.shell: |
+    if [ "$(lxc-info -n {{ item.item.key }} -sH)" = "RUNNING" ]; then
+      if [ "{{ item.changed }}" = "True" ]; then
+        lxc-stop -n {{ item.item.key }} -r && echo CAMBIADO
+      fi
+    else
+      lxc-start -n {{ item.item.key }} && echo CAMBIADO
+    fi
+  loop: "{{ mac.results }}"
+  loop_control:
+    label: "{{ item.item.key }}"
+  register: arranque
+  changed_when: "'CAMBIADO' in arranque.stdout"
+
+- name: Esperar a que cada contenedor tenga su IP
+  ansible.builtin.command: lxc-info -n {{ item.key }} -iH
+  loop: "{{ contenedores | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  register: ip
+  until: item.value.ip in ip.stdout
+  retries: 30
+  delay: 2
+  changed_when: false
+
+- name: Esperar a que cada contenedor resuelva nombres (para apt)
+  ansible.builtin.command: "{{ lxc_exec }} {{ item }} -- getent hosts deb.debian.org"
+  loop: "{{ contenedores.keys() | list }}"
+  register: dns
+  until: dns.rc == 0
+  retries: 30
+  delay: 2
+  changed_when: false
+
+# --- Acceso desde fuera: DNAT de la máquina al contenedor caddy -------------
+
+- name: Regla DNAT hacia el contenedor caddy
+  ansible.builtin.template:
+    src: lxc-dnat.nft.j2
+    dest: /etc/lxc/lxc-dnat.nft
+    mode: "0644"
+  notify: Recargar DNAT
+
+- name: Servicio que aplica la regla DNAT en cada arranque
+  ansible.builtin.template:
+    src: lxc-dnat.service.j2
+    dest: /etc/systemd/system/lxc-dnat.service
+    mode: "0644"
+  notify: Recargar DNAT
+
+- name: Activar el servicio DNAT
+  ansible.builtin.systemd_service:
+    name: lxc-dnat
+    state: started
+    enabled: true
+    daemon_reload: true

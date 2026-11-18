@@ -1,0 +1,69 @@
+- name: Instalar Caddy y PHP-FPM con soporte para PostgreSQL en el contenedor
+  ansible.builtin.shell: >-
+    {{ lxc_exec }} caddy -- sh -c
+    'dpkg -s {{ lxc_caddy_paquetes | join(" ") }} >/dev/null 2>&1
+    || { apt-get update && apt-get install -y {{ lxc_caddy_paquetes | join(" ") }} && echo INSTALADO; }'
+  register: lxc_caddy_instalacion
+  changed_when: "'INSTALADO' in lxc_caddy_instalacion.stdout"
+
+# El socket de PHP-FPM es de www-data (modo 0660): Caddy tiene que estar en ese grupo
+- name: Añadir el usuario caddy al grupo www-data  # noqa: risky-shell-pipe
+  ansible.builtin.shell: >-
+    {{ lxc_exec }} caddy -- sh -c
+    'id -nG caddy | grep -qw www-data || { usermod -aG www-data caddy && echo CAMBIADO; }'
+  register: lxc_caddy_grupo
+  changed_when: "'CAMBIADO' in lxc_caddy_grupo.stdout"
+  notify: Reiniciar Caddy
+
+- name: Configurar Caddy
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: "{{ lxc_caddy_rootfs }}/etc/caddy/Caddyfile"
+    mode: "0644"
+  notify: Recargar Caddy
+
+- name: Asegurar que Caddy y PHP-FPM arrancan con el contenedor
+  ansible.builtin.command: >-
+    {{ lxc_exec }} caddy -- systemctl is-enabled caddy php{{ lxc_caddy_php }}-fpm
+  register: lxc_caddy_servicios
+  changed_when: false
+  failed_when: false
+
+- name: Activar Caddy y PHP-FPM
+  ansible.builtin.command: >-
+    {{ lxc_exec }} caddy -- systemctl enable --now caddy php{{ lxc_caddy_php }}-fpm
+  when: lxc_caddy_servicios.rc != 0
+  changed_when: true
+
+# --- Aplicación ------------------------------------------------------------
+
+- name: Crear el DocumentRoot y el directorio de configuración
+  ansible.builtin.file:
+    path: "{{ lxc_caddy_rootfs }}{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ app_documentroot }}"
+    - /etc/notas
+
+- name: Copiar la aplicación
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ lxc_caddy_rootfs }}{{ app_documentroot }}/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - index.php
+    - style.css
+
+# www-data tiene el mismo UID/GID (33) en la máquina y en el contenedor
+- name: Generar config.php con los datos de conexión
+  ansible.builtin.template:
+    src: config.php.j2
+    dest: "{{ lxc_caddy_rootfs }}/etc/notas/config.php"
+    owner: root
+    group: www-data
+    mode: "0640"

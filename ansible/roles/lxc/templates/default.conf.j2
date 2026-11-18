@@ -1,0 +1,7 @@
+# {{ ansible_managed }}
+# Configuración que heredan los contenedores nuevos
+lxc.net.0.type = veth
+lxc.net.0.link = {{ lxc_puente }}
+lxc.net.0.flags = up
+lxc.apparmor.profile = generated
+lxc.apparmor.allow_nesting = 1

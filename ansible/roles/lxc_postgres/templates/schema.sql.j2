@@ -1,0 +1,13 @@
+-- {{ ansible_managed }}
+-- La tabla pertenece al usuario de la aplicación
+SET ROLE {{ app_bd_usuario }};
+
+CREATE TABLE IF NOT EXISTS notas (
+    id      SERIAL PRIMARY KEY,
+    autor   VARCHAR(50)  NOT NULL,
+    texto   VARCHAR(500) NOT NULL,
+    creada  TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+
+INSERT INTO notas (autor, texto)
+VALUES ('Ansible', 'Primera nota: PostgreSQL funciona dentro de un contenedor LXC.');

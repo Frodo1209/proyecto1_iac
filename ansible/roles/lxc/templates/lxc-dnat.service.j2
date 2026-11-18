@@ -1,0 +1,14 @@
+# {{ ansible_managed }}
+[Unit]
+Description=DNAT de los puertos web hacia el contenedor caddy
+After=lxc-net.service
+Wants=lxc-net.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/nft -f /etc/lxc/lxc-dnat.nft
+ExecStop=/usr/sbin/nft delete table ip lxc_dnat
+
+[Install]
+WantedBy=multi-user.target

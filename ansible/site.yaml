@@ -28,3 +28,11 @@
   become: true
   roles:
     - web
+
+- name: Máquina con contenedores LXC (caddy y postgres)
+  hosts: servidores_lxc
+  become: true
+  roles:
+    - lxc
+    - lxc_postgres
+    - lxc_caddy

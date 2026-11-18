@@ -8,7 +8,7 @@ variable "pool" {
 # Imágenes base (ya presentes en el pool) sobre las que se crean los clones ligeros
 variable "imagen_debian" {
   type        = string
-  description = "Imagen base Debian 13 para la máquina web."
+  description = "Imagen base Debian 13 para las máquinas web y lxc."
   default     = "debian13-base.qcow2"
 }
 
@@ -29,6 +29,12 @@ variable "memoria_bd" {
   type        = number
   description = "Memoria en MiB de la máquina bd."
   default     = 1024
+}
+
+variable "memoria_lxc" {
+  type        = number
+  description = "Memoria en MiB de la máquina lxc (aloja los contenedores caddy y postgres)."
+  default     = 2048
 }
 
 variable "vcpu" {
@@ -64,5 +70,6 @@ variable "host_datos" {
   default = {
     web = 10
     bd  = 20
+    lxc = 30
   }
 }

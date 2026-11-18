@@ -1,0 +1,58 @@
+paquetes_lxc:
+  - lxc
+  - dnsmasq-base   # DHCP y DNS de la red lxcbr0 (lo usa lxc-net)
+  - apparmor       # LXC aplica un perfil de AppArmor a cada contenedor
+  - nftables       # para la regla DNAT hacia el contenedor caddy
+  - wget
+  - gnupg          # la plantilla download verifica la firma de la imagen
+  - xz-utils
+
+# Red interna de los contenedores (puente lxcbr0 creado por lxc-net)
+lxc_puente: lxcbr0
+lxc_puente_ip: 10.0.3.1
+lxc_red: 10.0.3.0/24
+lxc_mascara: 255.255.255.0
+lxc_dhcp_rango: 10.0.3.100,10.0.3.200
+
+# Imagen de los contenedores (plantilla download de images.linuxcontainers.org)
+lxc_imagen: "-d debian -r trixie -a amd64"
+
+# Contenedores: MAC fija para que dnsmasq les dé siempre la misma IP
+contenedores:
+  postgres:
+    ip: 10.0.3.20
+    mac: "00:16:3e:00:03:20"
+  caddy:
+    ip: 10.0.3.10
+    mac: "00:16:3e:00:03:10"
+
+# Puertos de la máquina que se redirigen (DNAT) al contenedor caddy
+puertos_caddy:
+  - 80
+
+# Prefijo para ejecutar comandos dentro de un contenedor (sin heredar el entorno)
+lxc_exec: >-
+  lxc-attach --clear-env
+  --set-var PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+  --set-var DEBIAN_FRONTEND=noninteractive
+  -n
+
+# Base de datos de la aplicación (contenedor postgres)
+postgres_version: 17
+app_bd_nombre: notas
+app_bd_usuario: notas
+app_bd_password: N0tas-Lxc-2026
+
+# Aplicación (contenedor caddy)
+app_documentroot: /var/www/notas
+
+# Configuración de PostgreSQL dentro del contenedor, vista desde la máquina lxc
+lxc_postgres_conf: "/var/lib/lxc/postgres/rootfs/etc/postgresql/{{ postgres_version }}/main"
+
+# Contenedor caddy: paquetes y rootfs visto desde la máquina lxc
+lxc_caddy_rootfs: /var/lib/lxc/caddy/rootfs
+lxc_caddy_php: "8.4"   # versión de PHP de Debian 13
+lxc_caddy_paquetes:
+  - caddy
+  - php-fpm
+  - php-pgsql

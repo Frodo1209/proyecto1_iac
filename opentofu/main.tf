@@ -16,6 +16,14 @@ locals {
       mac_nat   = "52:54:00:14:00:20"
       mac_datos = "52:54:00:50:00:20"
     }
+    # Máquina con LXC: dentro corren los contenedores caddy y postgres
+    lxc = {
+      imagen    = var.imagen_debian
+      memoria   = var.memoria_lxc
+      usuario   = "debian"
+      mac_nat   = "52:54:00:14:00:30"
+      mac_datos = "52:54:00:50:00:30"
+    }
   }
 
   # IP estática de cada máquina en la red de datos

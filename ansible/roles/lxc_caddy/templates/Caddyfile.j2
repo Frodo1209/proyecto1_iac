@@ -1,0 +1,17 @@
+# {{ ansible_managed }}
+{
+	# Sin HTTPS automático: el escenario es local y no hay dominio público
+	auto_https off
+}
+
+# Responde a cualquier nombre en el puerto 80 (llega por DNAT desde la máquina lxc)
+:80 {
+	root * {{ app_documentroot }}
+	encode gzip
+	php_fastcgi unix//run/php/php-fpm.sock
+	file_server
+
+	log {
+		output file /var/log/caddy/notas.log
+	}
+}

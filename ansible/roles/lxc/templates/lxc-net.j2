@@ -1,0 +1,11 @@
+# {{ ansible_managed }}
+# Configuración de lxc-net: puente {{ lxc_puente }} con NAT, DHCP y DNS
+USE_LXC_BRIDGE="true"
+LXC_BRIDGE="{{ lxc_puente }}"
+LXC_ADDR="{{ lxc_puente_ip }}"
+LXC_NETMASK="{{ lxc_mascara }}"
+LXC_NETWORK="{{ lxc_red }}"
+LXC_DHCP_RANGE="{{ lxc_dhcp_rango }}"
+LXC_DHCP_MAX="100"
+LXC_DHCP_CONFILE="/etc/lxc/dnsmasq.conf"
+LXC_DOMAIN="lxc"

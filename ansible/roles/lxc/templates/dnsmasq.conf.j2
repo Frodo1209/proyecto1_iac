@@ -1,0 +1,5 @@
+# {{ ansible_managed }}
+# IP fija para cada contenedor según su MAC
+{% for nombre, c in contenedores.items() %}
+dhcp-host={{ c.mac }},{{ nombre }},{{ c.ip }}
+{% endfor %}
