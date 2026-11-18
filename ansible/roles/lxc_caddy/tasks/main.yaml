@@ -1,0 +1,36 @@
+- name: Instalar Caddy y PHP-FPM con soporte para PostgreSQL en el contenedor
+  ansible.builtin.shell: >-
+    {{ lxc_exec }} caddy -- sh -c
+    'dpkg -s {{ lxc_caddy_paquetes | join(" ") }} >/dev/null 2>&1
+    || { apt-get update && apt-get install -y {{ lxc_caddy_paquetes | join(" ") }} && echo INSTALADO; }'
+  register: lxc_caddy_instalacion
+  changed_when: "'INSTALADO' in lxc_caddy_instalacion.stdout"
+
+# El socket de PHP-FPM es de www-data (modo 0660): Caddy tiene que estar en ese grupo
+- name: Añadir el usuario caddy al grupo www-data  # noqa: risky-shell-pipe
+  ansible.builtin.shell: >-
+    {{ lxc_exec }} caddy -- sh -c
+    'id -nG caddy | grep -qw www-data || { usermod -aG www-data caddy && echo CAMBIADO; }'
+  register: lxc_caddy_grupo
+  changed_when: "'CAMBIADO' in lxc_caddy_grupo.stdout"
+  notify: Reiniciar Caddy
+
+- name: Configurar Caddy
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: "{{ lxc_caddy_rootfs }}/etc/caddy/Caddyfile"
+    mode: "0644"
+  notify: Recargar Caddy
+
+- name: Asegurar que Caddy y PHP-FPM arrancan con el contenedor
+  ansible.builtin.command: >-
+    {{ lxc_exec }} caddy -- systemctl is-enabled caddy php{{ lxc_caddy_php }}-fpm
+  register: lxc_caddy_servicios
+  changed_when: false
+  failed_when: false
+
+- name: Activar Caddy y PHP-FPM
+  ansible.builtin.command: >-
+    {{ lxc_exec }} caddy -- systemctl enable --now caddy php{{ lxc_caddy_php }}-fpm
+  when: lxc_caddy_servicios.rc != 0
+  changed_when: true

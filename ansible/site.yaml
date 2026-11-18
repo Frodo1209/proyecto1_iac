@@ -35,3 +35,4 @@
   roles:
     - lxc
     - lxc_postgres
+    - lxc_caddy

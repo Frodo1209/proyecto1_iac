@@ -48,3 +48,11 @@ app_documentroot: /var/www/notas
 
 # Configuración de PostgreSQL dentro del contenedor, vista desde la máquina lxc
 lxc_postgres_conf: "/var/lib/lxc/postgres/rootfs/etc/postgresql/{{ postgres_version }}/main"
+
+# Contenedor caddy: paquetes y rootfs visto desde la máquina lxc
+lxc_caddy_rootfs: /var/lib/lxc/caddy/rootfs
+lxc_caddy_php: "8.4"   # versión de PHP de Debian 13
+lxc_caddy_paquetes:
+  - caddy
+  - php-fpm
+  - php-pgsql
