@@ -1,0 +1,2 @@
+# Solo el bastión reenvía conexiones (lo necesita el salto con ProxyCommand)
+ssh_reenvio: "{{ inventory_hostname in groups['bastion'] }}"

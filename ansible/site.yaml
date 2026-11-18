@@ -16,6 +16,7 @@
       ansible.builtin.setup:
   roles:
     - commons
+    - ssh
 
 - name: Servidor de base de datos
   hosts: servidores_bd

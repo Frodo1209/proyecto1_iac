@@ -1,0 +1,13 @@
+# {{ ansible_managed }}
+# sshd se queda con el primer valor que lee, así que este fichero (10-)
+# manda sobre los que añaden la imagen o cloud-init (50-cloud-init.conf)
+PermitRootLogin no
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PubkeyAuthentication yes
+AllowUsers {{ ansible_user }}
+MaxAuthTries 3
+LoginGraceTime 30
+X11Forwarding no
+AllowAgentForwarding no
+AllowTcpForwarding {{ 'yes' if ssh_reenvio else 'no' }}
