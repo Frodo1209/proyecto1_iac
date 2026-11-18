@@ -56,3 +56,16 @@ lxc_caddy_paquetes:
   - caddy
   - php-fpm
   - php-pgsql
+
+# Cortafuegos: DHCP y DNS para los contenedores, su salida a internet y el
+# puerto 80 redirigido (DNAT) al contenedor caddy
+cortafuegos_entrada:
+  - iifname "{{ lxc_puente }}" udp dport { 53, 67 } accept comment "DHCP y DNS de lxc-net"
+  - iifname "{{ lxc_puente }}" tcp dport 53 accept comment "DNS de lxc-net"
+cortafuegos_reenvio:
+  - ct state established,related accept
+  - iifname "{{ lxc_puente }}" oifname "eth0" accept comment "salida de los contenedores"
+  - iifname "{{ lxc_puente }}" oifname "{{ lxc_puente }}" accept comment "entre contenedores"
+  - >-
+    iifname "eth0" oifname "{{ lxc_puente }}" ip daddr {{ contenedores.caddy.ip }}
+    tcp dport { {{ puertos_caddy | join(', ') }} } ct status dnat accept comment "web hacia caddy"

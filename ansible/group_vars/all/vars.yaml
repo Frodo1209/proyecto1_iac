@@ -2,6 +2,7 @@
 # OpenTofu (variable ip_datos de cada host), así no se repiten aquí a mano
 ip_web: "{{ hostvars[groups['servidores_web'][0]]['ip_datos'] }}"
 ip_bd: "{{ hostvars[groups['servidores_bd'][0]]['ip_datos'] }}"
+ip_bastion: "{{ hostvars[groups['bastion'][0]]['ip_datos'] }}"
 
 # Base de datos de la aplicación
 bd_nombre: guestbook

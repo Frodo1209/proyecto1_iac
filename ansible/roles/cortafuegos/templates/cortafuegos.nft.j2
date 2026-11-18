@@ -1,0 +1,37 @@
+#!/usr/sbin/nft -f
+# {{ ansible_managed }}
+# Cortafuegos de {{ inventory_hostname }}: todo lo que entra se rechaza salvo lo
+# que se permite aquí. Tabla propia (sin "flush ruleset"), así no borra las de
+# lxc-net, lxc-dnat ni fail2ban
+table inet cortafuegos
+delete table inet cortafuegos
+
+table inet cortafuegos {
+    chain entrada {
+        type filter hook input priority filter; policy drop;
+
+        ct state established,related accept
+        ct state invalid drop
+        iif "lo" accept
+        meta l4proto { icmp, ipv6-icmp } accept
+        udp dport 68 accept comment "renovaciones DHCP"
+
+{% if inventory_hostname in groups['bastion'] %}
+        iifname "eth0" ip saddr {{ ip_anfitrion }} tcp dport 22 accept comment "SSH solo desde el anfitrión"
+{% else %}
+        iifname "eth1" ip saddr {{ ip_bastion }} tcp dport 22 accept comment "SSH solo desde el bastión"
+{% endif %}
+{% for regla in cortafuegos_entrada %}
+        {{ regla }}
+{% endfor %}
+
+        limit rate 10/minute log prefix "cortafuegos-entrada: "
+    }
+
+    chain reenvio {
+        type filter hook forward priority filter; policy drop;
+{% for regla in cortafuegos_reenvio %}
+        {{ regla }}
+{% endfor %}
+    }
+}

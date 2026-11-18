@@ -43,3 +43,10 @@
     - lxc
     - lxc_postgres
     - lxc_caddy
+
+# El cortafuegos va al final, cuando ya está todo instalado
+- name: Cortafuegos
+  hosts: all
+  become: true
+  roles:
+    - cortafuegos
