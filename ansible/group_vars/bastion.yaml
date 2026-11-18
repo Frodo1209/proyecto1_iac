@@ -1,0 +1,8 @@
+paquetes_bastion:
+  - fail2ban
+  - python3-systemd   # fail2ban lee los intentos de SSH del journal
+
+# fail2ban: tras 3 fallos en 10 minutos, la IP queda bloqueada 1 hora
+fail2ban_intentos: 3
+fail2ban_ventana: 10m
+fail2ban_bloqueo: 1h

@@ -11,3 +11,6 @@ bd_password: "{{ vault_bd_password }}"   # cifrada en vault.yaml
 # Aplicación: repositorio y versión (commit) que se despliega
 app_repo_raw: https://raw.githubusercontent.com/josedom24/guestbook_php
 app_version: a5b6c516e2aab8449e1e838284b2eff97813251d
+
+# IP del anfitrión en la red NAT: es el único que puede entrar al bastión por SSH
+ip_anfitrion: 192.168.140.1

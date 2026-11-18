@@ -18,6 +18,12 @@
     - commons
     - ssh
 
+- name: Bastión
+  hosts: bastion
+  become: true
+  roles:
+    - bastion
+
 - name: Servidor de base de datos
   hosts: servidores_bd
   become: true

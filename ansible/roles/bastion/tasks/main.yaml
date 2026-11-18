@@ -1,0 +1,17 @@
+- name: Instalar fail2ban
+  ansible.builtin.apt:
+    name: "{{ paquetes_bastion }}"
+    state: present
+
+- name: Configurar la jaula de SSH
+  ansible.builtin.template:
+    src: jail.local.j2
+    dest: /etc/fail2ban/jail.local
+    mode: "0644"
+  notify: Reiniciar fail2ban
+
+- name: Asegurar que fail2ban está arrancado
+  ansible.builtin.service:
+    name: fail2ban
+    state: started
+    enabled: true
