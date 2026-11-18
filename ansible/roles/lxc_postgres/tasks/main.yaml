@@ -1,0 +1,75 @@
+# Los ficheros de configuración se escriben directamente en el rootfs del
+# contenedor desde la máquina lxc y los comandos se ejecutan con lxc-attach
+- name: Instalar PostgreSQL en el contenedor
+  ansible.builtin.shell: >-
+    {{ lxc_exec }} postgres -- sh -c
+    'dpkg -s postgresql >/dev/null 2>&1
+    || { apt-get update && apt-get install -y postgresql && echo INSTALADO; }'
+  register: lxc_postgres_instalacion
+  changed_when: "'INSTALADO' in lxc_postgres_instalacion.stdout"
+
+- name: Escuchar en la red de los contenedores
+  ansible.builtin.template:
+    src: 60-notas.conf.j2
+    dest: "{{ lxc_postgres_conf }}/conf.d/60-notas.conf"
+    mode: "0644"
+  notify: Reiniciar PostgreSQL
+
+- name: Permitir el acceso solo desde el contenedor caddy
+  ansible.builtin.lineinfile:
+    path: "{{ lxc_postgres_conf }}/pg_hba.conf"
+    regexp: '^host\s+{{ app_bd_nombre }}\s+{{ app_bd_usuario }}\s'
+    line: "host    {{ app_bd_nombre }}    {{ app_bd_usuario }}    {{ contenedores.caddy.ip }}/32    scram-sha-256"
+  notify: Reiniciar PostgreSQL
+
+- name: Aplicar la configuración
+  ansible.builtin.meta: flush_handlers
+
+- name: Comprobar si existe el usuario
+  ansible.builtin.command: >-
+    {{ lxc_exec }} postgres -- runuser -u postgres -- psql -tAc
+    "SELECT 1 FROM pg_roles WHERE rolname = '{{ app_bd_usuario }}'"
+  register: lxc_postgres_usuario
+  changed_when: false
+
+# La contraseña se pasa como variable de psql, así no hay que escaparla
+- name: Crear el usuario de la aplicación
+  ansible.builtin.command:
+    cmd: >-
+      {{ lxc_exec }} postgres -- runuser -u postgres -- psql -v ON_ERROR_STOP=1
+      -v pass={{ app_bd_password | quote }}
+    stdin: "CREATE ROLE {{ app_bd_usuario }} LOGIN PASSWORD :'pass';"
+  when: lxc_postgres_usuario.stdout != "1"
+  changed_when: true
+
+- name: Comprobar si existe la base de datos
+  ansible.builtin.command: >-
+    {{ lxc_exec }} postgres -- runuser -u postgres -- psql -tAc
+    "SELECT 1 FROM pg_database WHERE datname = '{{ app_bd_nombre }}'"
+  register: lxc_postgres_bd
+  changed_when: false
+
+- name: Crear la base de datos
+  ansible.builtin.command: >-
+    {{ lxc_exec }} postgres -- runuser -u postgres --
+    createdb -O {{ app_bd_usuario }} {{ app_bd_nombre }}
+  when: lxc_postgres_bd.stdout != "1"
+  changed_when: true
+
+# Idempotencia: solo se crea la tabla (y la primera nota) si aún no existe
+- name: Comprobar si existe la tabla
+  ansible.builtin.command: >-
+    {{ lxc_exec }} postgres -- runuser -u postgres -- psql -d {{ app_bd_nombre }} -tAc
+    "SELECT to_regclass('public.notas') IS NOT NULL"
+  register: lxc_postgres_tabla
+  changed_when: false
+
+# El esquema se genera con una plantilla y se le pasa a psql por la entrada estándar
+- name: Crear la tabla
+  ansible.builtin.command:
+    cmd: >-
+      {{ lxc_exec }} postgres -- runuser -u postgres --
+      psql -v ON_ERROR_STOP=1 -d {{ app_bd_nombre }}
+    stdin: "{{ lookup('ansible.builtin.template', 'schema.sql.j2') }}"
+  when: lxc_postgres_tabla.stdout != "t"
+  changed_when: true

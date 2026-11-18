@@ -34,3 +34,4 @@
   become: true
   roles:
     - lxc
+    - lxc_postgres

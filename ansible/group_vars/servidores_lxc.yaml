@@ -45,3 +45,6 @@ app_bd_password: N0tas-Lxc-2026
 
 # Aplicación (contenedor caddy)
 app_documentroot: /var/www/notas
+
+# Configuración de PostgreSQL dentro del contenedor, vista desde la máquina lxc
+lxc_postgres_conf: "/var/lib/lxc/postgres/rootfs/etc/postgresql/{{ postgres_version }}/main"
