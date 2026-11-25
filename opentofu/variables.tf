@@ -43,6 +43,18 @@ variable "memoria_bastion" {
   default     = 512
 }
 
+variable "memoria_balanceador" {
+  type        =	number
+  description = "Memoria en MB de la máquina balanceador"
+  default = 512
+}
+
+variable "num_web" {
+  type        = number
+  description = "Número de servidores web"
+  default     = 2
+}
+
 variable "vcpu" {
   type        = number
   description = "Número de CPUs de cada máquina."
