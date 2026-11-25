@@ -4,3 +4,7 @@ paquetes_bd:
 
 # Socket de MariaDB: Ansible se conecta como root por él, sin contraseña
 bd_socket: /run/mysqld/mysqld.sock
+
+# Cortafuegos: MariaDB solo desde el servidor web por la red de datos
+cortafuegos_entrada:
+  - iifname "eth1" ip saddr {{ ip_web }} tcp dport 3306 accept comment "MariaDB desde web"

@@ -16,6 +16,13 @@
       ansible.builtin.setup:
   roles:
     - commons
+    - ssh
+
+- name: Bastión
+  hosts: bastion
+  become: true
+  roles:
+    - bastion
 
 - name: Servidor de base de datos
   hosts: servidores_bd
@@ -36,3 +43,10 @@
     - lxc
     - lxc_postgres
     - lxc_caddy
+
+# El cortafuegos va al final, cuando ya está todo instalado
+- name: Cortafuegos
+  hosts: all
+  become: true
+  roles:
+    - cortafuegos

@@ -1,0 +1,14 @@
+# {{ ansible_managed }}
+[DEFAULT]
+# Bloquea con nftables, en su propia tabla
+banaction = nftables-multiport
+banaction_allports = nftables-allports
+# El anfitrión nunca se bloquea
+ignoreip = 127.0.0.1/8 ::1 {{ ip_anfitrion }}
+
+[sshd]
+enabled = true
+backend = systemd
+maxretry = {{ fail2ban_intentos }}
+findtime = {{ fail2ban_ventana }}
+bantime = {{ fail2ban_bloqueo }}

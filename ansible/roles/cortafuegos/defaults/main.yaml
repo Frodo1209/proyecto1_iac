@@ -1,0 +1,3 @@
+# Reglas extra de cada grupo (se definen en group_vars), en sintaxis de nftables
+cortafuegos_entrada: []
+cortafuegos_reenvio: []

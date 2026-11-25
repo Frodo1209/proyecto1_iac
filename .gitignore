@@ -12,3 +12,6 @@ ansible/hosts
 *.img
 *.iso
 *.retry
+
+# Contraseña de Ansible Vault
+ansible/.vault_pass

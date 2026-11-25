@@ -1,0 +1,5 @@
+- name: Recargar cortafuegos
+  ansible.builtin.systemd_service:
+    name: cortafuegos
+    state: reloaded
+    daemon_reload: true
